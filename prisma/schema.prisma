@@ -1,0 +1,165 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+//===================================================
+// Users and Authentification Models
+//===================================================
+
+
+model User{
+  id Int @id @default(autoincrement())
+  email String @unique
+  password String
+  name String
+  role Role @default(USER)
+  createdAt DateTime @default(now())
+
+  //Relationships
+
+  tasks Tasks[] @relation("userTasks")
+  actions Action[]
+  comments Comment[]
+  messages Message[]
+  actedHistory History [] @relation("actorHistory")
+
+}
+
+
+enum Role{
+  ADMIN
+  PRODUCTION
+  USER
+}
+
+
+//============================================
+// TASKS AND QUEUE MODELS
+//===========================================
+
+
+
+model Tasks{
+  id Int @id @default(autoincrement())
+  title String
+  description String?
+  priority Priority @default(MEDIUM)
+  status Status @default(IN_QUEUE)
+  estimatedMinutes Int?
+  position Int?
+  createdAt DateTime @default(now())
+  updateAt DateTime @updatedAt
+
+
+  //REFERENCES
+
+
+  userId Int
+  user User @relation("userTasks", fields: [userId],references: [id], onDelete: Cascade)
+
+  requestedById Int?
+
+
+  //Relationships
+
+
+  flags Flag[]
+  comments Comment[]
+  history History[]
+
+  @@index([status, position])
+  @@index([userId])
+}
+
+enum Status{
+  IN_QUEUE
+  IN_PROCESS
+  COMPLETE
+  DELAYED
+  PENDING_AUTHORIZATION
+
+}
+
+enum Priority{
+  HIGH
+  MEDIUM
+  LOW
+}
+
+
+//====================
+//Auxilary Models
+//====================
+
+model Flag{
+  id Int @id @default(autoincrement())
+  name String
+  createdAt DateTime @default(now())
+
+
+
+ taskId Int
+ task Task @relation(fields: [taskId],references: [id],onDelete: Cascade)
+
+ @@index([taskId])
+
+}
+
+model Comment{
+id Int @id @default(autoincrement())
+content String 
+createdAt DateTime @default(now())
+
+authorId Int
+author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+taskId Int
+task Task @relation(fields: [taskId],references: [id],onDelete: Cascade)
+
+@@index([taskId])
+@@index([authorId])
+}
+
+model History{
+  id Int @id @default(autoincrement())
+  action String
+  meta Json?
+  createdAt DateTime @default(now())
+
+
+  taskId Int
+  task Task @relation(fields: [taskId],references: [id],onDelete: Cascade)
+
+
+  actorId Int?
+  actor User? @relation("actorHistory", fields: [actorId],references: [id],onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([createdAt])
+
+}
+
+
+
+
+
+
+model Action{
+
+}
+model Message{
+
+}
