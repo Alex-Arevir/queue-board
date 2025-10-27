@@ -30,7 +30,7 @@ model User{
 
   //Relationships
 
-  tasks Tasks[] @relation("userTasks")
+  tasks Task[] @relation("userTasks")
   actions Action[]
   comments Comment[]
   messages Message[]
@@ -52,7 +52,7 @@ enum Role{
 
 
 
-model Tasks{
+model Task{
   id Int @id @default(autoincrement())
   title String
   description String?
@@ -61,7 +61,7 @@ model Tasks{
   estimatedMinutes Int?
   position Int?
   createdAt DateTime @default(now())
-  updateAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt
 
 
   //REFERENCES
@@ -145,21 +145,48 @@ model History{
 
 
   actorId Int?
-  actor User? @relation("actorHistory", fields: [actorId],references: [id],onDelete: Cascade)
+  actor User? @relation("actorHistory", fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([taskId])
   @@index([createdAt])
 
 }
 
+//=================================
+//  MESSSAGES SYSTEM
+//================================
 
 
+model Message{
+  id Int @id @default(autoincrement())
+  content String
+  attachment String?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
 
+  senderId Int
+  sender User @relation(fields: [senderId], references: [id],onDelete: Cascade)
+  @@index([senderId])
+  @@index([createdAt])
+  @@index([expiresAt])
 
-
-model Action{
 
 }
-model Message{
+
+//=================================
+//  ACTIONS LOGGING
+//================================
+
+model Action{
+  id Int @id @default(autoincrement())
+  name String
+  description String?
+  createdAt DateTime @default(now())
+
+  userId Int
+  user User @relation(fields: [userId], references: [id],onDelete: Cascade)
+
+  @@index([userId])
+
 
 }
